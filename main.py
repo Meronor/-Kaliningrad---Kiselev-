@@ -79,7 +79,7 @@ class Suprematism(QMainWindow):
 
     def draw(self):
         R = randint(20, 100)
-        self.qp.setBrush(QColor('#ffd42e'))
+        self.qp.setBrush(QColor(*[randint(0, 255) for _ in range(3)]))
         self.qp.drawEllipse(int(randint(0, 1000) - R / 2),
                             int(randint(0, 1000) - R / 2), R, R)
 
