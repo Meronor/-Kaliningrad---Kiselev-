@@ -1,14 +1,11 @@
-import sys
-from math import sin, cos, pi
-from random import randint
-
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPainter, QColor
-from PyQt5.QtWidgets import QMainWindow, QApplication
 import io
-from PyQt5 import uic
+import sqlite3
+import sys
 
-template = '''<?xml version="1.0" encoding="UTF-8"?>
+from PyQt5 import uic
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+
+template = """<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -24,19 +21,11 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="btn">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>240</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Click me</string>
-    </property>
-   </widget>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTableWidget" name="tableWidget"/>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -53,39 +42,33 @@ template = '''<?xml version="1.0" encoding="UTF-8"?>
  <resources/>
  <connections/>
 </ui>
-'''
+"""
 
 
-class Suprematism(QMainWindow):
+class MyWidget(QMainWindow):
     def __init__(self):
-        super().__init__()
-        f = io.StringIO(template)
-        uic.loadUi(f, self)
-        self.flag = False
-        self.setGeometry(300, 300, 1000, 1000)
-        self.qp = QPainter()
-        self.btn.clicked.connect(self.drawf)
+        super(MyWidget, self).__init__()
+        ui_file = io.StringIO(template)
+        uic.loadUi(ui_file, self)
+        self.con = sqlite3.connect("coffee.sqlite")
+        cur = self.con.cursor()
+        # Получили результат запроса, который ввели в текстовое поле
+        que = "SELECT * FROM data"
+        result = cur.execute(que).fetchall()
+        # Заполнили размеры таблицы
+        self.tableWidget.setRowCount(len(result))
+        self.tableWidget.setColumnCount(len(result[0]))
 
-    def drawf(self):
-        self.flag = True
-        self.update()
-
-    def paintEvent(self, event):
-        if self.flag:
-            self.qp = QPainter()
-            self.qp.begin(self)
-            self.draw()
-            self.qp.end()
-
-    def draw(self):
-        R = randint(20, 100)
-        self.qp.setBrush(QColor(*[randint(0, 255) for _ in range(3)]))
-        self.qp.drawEllipse(int(randint(0, 1000) - R / 2),
-                            int(randint(0, 1000) - R / 2), R, R)
+        # Заполнили таблицу полученными элементами
+        for i, elem in enumerate(result):
+            for j, val in enumerate(elem):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(val)))
+        self.tableWidget.setHorizontalHeaderLabels(
+            ['Name', 'Sort', 'Roasting', 'Grains', 'Description', 'Сost', 'Volume'])
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Suprematism()
+    ex = MyWidget()
     ex.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
