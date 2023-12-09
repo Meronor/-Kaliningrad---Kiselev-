@@ -2,8 +2,11 @@ import io
 import sqlite3
 import sys
 
+from winds import main_wind, addEditCoffeeForm
+
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog
+
 
 template = """<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
@@ -259,12 +262,11 @@ temp_dia = '''<?xml version="1.0" encoding="UTF-8"?>
 '''
 
 
-class MyWidget(QMainWindow):
+class MyWidget(QMainWindow, main_wind.Ui_MainWindow):
     def __init__(self):
         super(MyWidget, self).__init__()
-        ui_file = io.StringIO(template)
-        uic.loadUi(ui_file, self)
-        self.con = sqlite3.connect("coffee.sqlite")
+        self.setupUi(self)
+        self.con = sqlite3.connect("data/coffee.sqlite")
         cur = self.con.cursor()
         que = "SELECT * FROM data"
         result = cur.execute(que).fetchall()
@@ -283,12 +285,11 @@ class MyWidget(QMainWindow):
         dlg.exec()
 
 
-class AddeventWind(QDialog):
+class AddeventWind(QDialog, addEditCoffeeForm.Ui_Dialog):
     def __init__(self, main):
         super().__init__()
         self.main = main
-        f = io.StringIO(temp_dia)
-        uic.loadUi(f, self)
+        self.setupUi(self)
         self.add.clicked.connect(self.add_coffee)
         self.back.clicked.connect(self.backk)
 
@@ -297,7 +298,7 @@ class AddeventWind(QDialog):
 
     def add_coffee(self):
         if self.Name_ed.text() in get_names():
-            with sqlite3.connect("coffee.sqlite") as con:
+            with sqlite3.connect("data/coffee.sqlite") as con:
                 cur = con.cursor()
                 cur.execute(
                     f'UPDATE data SET sort = "{self.Sort_ed.text()}", medium = "{self.Roasting_ed.text()}"'
@@ -305,14 +306,14 @@ class AddeventWind(QDialog):
                     f'"{self.Cost_ed.text()}", V = "{self.Volume_ed.text()}" WHERE name = "{self.Name_ed.text()}"')
                 self.close()
         else:
-            with sqlite3.connect("coffee.sqlite") as con:
+            with sqlite3.connect("data/coffee.sqlite") as con:
                 cur = con.cursor()
                 cur.execute(f"INSERT INTO data (name, sort, medium, zern, describtion, cost, V) VALUES"
                             f" ('{self.Name_ed.text()}', '{self.Sort_ed.text()}', '{self.Roasting_ed.text()}', "
                             f"'{self.Grains_ed.text()}', "
                             f"'{self.Description_ed.text()}', '{self.Cost_ed.text()}', '{self.Volume_ed.text()}')")
                 self.close()
-        self.main.con = sqlite3.connect("coffee.sqlite")
+        self.main.con = sqlite3.connect("data/coffee.sqlite")
         cur = self.main.con.cursor()
         que = "SELECT * FROM data"
         result = cur.execute(que).fetchall()
@@ -329,7 +330,7 @@ class AddeventWind(QDialog):
 
 def get_names():
     try:
-        with sqlite3.connect("coffee.sqlite") as con:
+        with sqlite3.connect("data/coffee.sqlite") as con:
             cur = con.cursor()
             return list(map(lambda x: x[0], cur.execute(f"SELECT name FROM data").fetchall()))
     except Exception as s:
